@@ -262,7 +262,7 @@ export default function ListingTable({ listings, areaName }: ListingTableProps) 
               <th className="py-4 px-6">Yearly Rent</th>
               <th className="py-4 px-6">
                 <span className="flex items-center gap-1">
-                  Daily Est. <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" title="Daily estimate is calculated as (Monthly / 30) * 1.5 including standard short-stay pricing premiums." />
+                  Daily Est. <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" aria-label="Daily estimate is calculated as (Monthly / 30) * 1.5 including standard short-stay pricing premiums." />
                 </span>
               </th>
               <th className="py-4 px-6 text-right">

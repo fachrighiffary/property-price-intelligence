@@ -252,6 +252,68 @@ export default function StatsDashboard({ overall, segments, areaName, listings }
     };
   }, [listings, areaName]);
 
+  // Market Intelligence metrics
+  const marketIntel = useMemo(() => {
+    // Price Tier based on median
+    const median = overall.median;
+    let tierLabel: string;
+    let tierColor: string;
+    let tierBg: string;
+    let tierDot: string;
+    if (median < 1500) {
+      tierLabel = "Budget"; tierColor = "text-emerald-700"; tierBg = "bg-emerald-50 border-emerald-200"; tierDot = "bg-emerald-500";
+    } else if (median < 2500) {
+      tierLabel = "Mid-Range"; tierColor = "text-blue-700"; tierBg = "bg-blue-50 border-blue-200"; tierDot = "bg-blue-500";
+    } else if (median < 4500) {
+      tierLabel = "Premium"; tierColor = "text-violet-700"; tierBg = "bg-violet-50 border-violet-200"; tierDot = "bg-violet-500";
+    } else {
+      tierLabel = "Luxury"; tierColor = "text-amber-700"; tierBg = "bg-amber-50 border-amber-200"; tierDot = "bg-amber-500";
+    }
+
+    // Avg RM/sqft
+    const validSqft = listings.filter(l => l.size_sqft > 100 && l.price_monthly > 0);
+    const avgRmPerSqft = validSqft.length > 0
+      ? Math.round((validSqft.reduce((sum, l) => sum + l.price_monthly / l.size_sqft, 0) / validSqft.length) * 10) / 10
+      : 0;
+
+    // Price spread
+    const prices = listings.map(l => l.price_monthly).filter(p => p > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+    // Negotiation gap: (avg - median) / median %
+    const negGapPct = overall.median > 0
+      ? Math.round(((overall.average - overall.median) / overall.median) * 100)
+      : 0;
+    let negGapLabel: string;
+    let negGapColor: string;
+    if (negGapPct > 20) {
+      negGapLabel = "High outlier skew — negotiate below average"; negGapColor = "text-amber-600";
+    } else if (negGapPct > 10) {
+      negGapLabel = "Moderate skew — target median, not average"; negGapColor = "text-blue-600";
+    } else if (negGapPct >= 0) {
+      negGapLabel = "Stable market — tight negotiation room"; negGapColor = "text-emerald-600";
+    } else {
+      negGapLabel = "Median above average — premium units dominate"; negGapColor = "text-violet-600";
+    }
+
+    // Bedroom distribution
+    const segmentOrder = ["Studio", "1 Bedroom", "2 Bedrooms", "3 Bedrooms", "4 Bedrooms", "5+ Bedrooms"];
+    const bedroomDist = segmentOrder.map(seg => {
+      const count = listings.filter(l => l.bedrooms === seg).length;
+      const pct = listings.length > 0 ? Math.round((count / listings.length) * 100) : 0;
+      return { seg, count, pct };
+    }).filter(d => d.count > 0);
+
+    // Best Value Picks — lowest RM/sqft
+    const bestValuePicks = validSqft
+      .map(l => ({ ...l, rmPerSqft: Math.round((l.price_monthly / l.size_sqft) * 10) / 10 }))
+      .sort((a, b) => a.rmPerSqft - b.rmPerSqft)
+      .slice(0, 3);
+
+    return { tierLabel, tierColor, tierBg, tierDot, avgRmPerSqft, minPrice, maxPrice, negGapPct, negGapLabel, negGapColor, bedroomDist, bestValuePicks };
+  }, [listings, overall]);
+
   return (
     <div className="flex flex-col gap-8" id="stats-dashboard-panel">
       
@@ -328,6 +390,129 @@ export default function StatsDashboard({ overall, segments, areaName, listings }
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Average Size</p>
             <h4 className="text-2xl font-bold text-slate-800 mt-1">{overall.avgSize} <span className="text-xs font-normal">sqft</span></h4>
             <p className="text-[10px] text-slate-400 mt-0.5">Average floor area</p>
+          </div>
+        </div>
+      </div>
+      {/* END metric cards */}
+
+      {/* 2. Market Intelligence Summary */}
+      <div className="flex flex-col gap-4" id="market-intelligence-panel">
+        {/* Section header + Price Tier badge */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <TrendingDown className="h-5 w-5 text-blue-600" />
+            Market Intelligence
+          </h3>
+          <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${marketIntel.tierBg} ${marketIntel.tierColor}`}>
+            <span className={`h-2 w-2 rounded-full ${marketIntel.tierDot}`} />
+            {areaName} — {marketIntel.tierLabel} Market
+          </span>
+        </div>
+
+        {/* 4 Quick Insight Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Price Tier */}
+          <div className={`p-5 rounded-xl border flex flex-col gap-2 shadow-sm ${marketIntel.tierBg}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-wider ${marketIntel.tierColor}`}>Price Tier</p>
+            <h4 className={`text-2xl font-extrabold ${marketIntel.tierColor}`}>{marketIntel.tierLabel}</h4>
+            <p className="text-[10px] text-slate-500 mt-auto">Median RM {overall.median.toLocaleString()}/mo</p>
+          </div>
+
+          {/* RM / sqft */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col gap-2 shadow-sm">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg RM / sqft</p>
+            <h4 className="text-2xl font-extrabold text-orange-500">
+              {marketIntel.avgRmPerSqft > 0 ? `RM ${marketIntel.avgRmPerSqft}` : "—"}
+            </h4>
+            <p className="text-[10px] text-slate-400 mt-auto">Price-per-size efficiency</p>
+          </div>
+
+          {/* Price Spread */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col gap-3 shadow-sm">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Price Spread</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-sm font-bold text-emerald-600 font-mono">RM {marketIntel.minPrice.toLocaleString()}</span>
+              <span className="text-slate-300 text-xs">→</span>
+              <span className="text-sm font-bold text-rose-500 font-mono">RM {marketIntel.maxPrice.toLocaleString()}</span>
+            </div>
+            <div className="w-full h-1.5 bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 rounded-full" />
+            <p className="text-[10px] text-slate-400">Market width range</p>
+          </div>
+
+          {/* Negotiation Gap */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col gap-2 shadow-sm">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Negotiation Gap</p>
+            <h4 className={`text-2xl font-extrabold ${marketIntel.negGapColor}`}>
+              {marketIntel.negGapPct > 0 ? "+" : ""}{marketIntel.negGapPct}%
+            </h4>
+            <p className={`text-[10px] font-medium mt-auto ${marketIntel.negGapColor}`}>{marketIntel.negGapLabel}</p>
+          </div>
+        </div>
+
+        {/* Bedroom Distribution + Best Value Picks */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Bedroom Supply Distribution */}
+          <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex flex-col gap-4">
+            <div>
+              <h4 className="text-sm font-bold text-slate-800">Supply Distribution by Bedroom</h4>
+              <p className="text-xs text-slate-400 mt-0.5">How the available units are distributed</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              {marketIntel.bedroomDist.map((d, i) => {
+                const barColors = ["bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-amber-500", "bg-rose-500", "bg-sky-500"];
+                const textColors = ["text-blue-600", "text-emerald-600", "text-violet-600", "text-amber-600", "text-rose-600", "text-sky-600"];
+                return (
+                  <div key={d.seg} className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-slate-600 w-24 shrink-0">{d.seg}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${barColors[i % barColors.length]}`}
+                        style={{ width: `${d.pct}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-400 font-mono w-12 text-right shrink-0">{d.count} unit</span>
+                    <span className={`text-xs font-bold w-8 text-right shrink-0 ${textColors[i % textColors.length]}`}>{d.pct}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Best Value Picks */}
+          <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex flex-col gap-4">
+            <div>
+              <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                Best Value Picks
+              </h4>
+              <p className="text-xs text-slate-400 mt-0.5">Lowest RM/sqft — best space for your money</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {marketIntel.bestValuePicks.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No listings with size data available.</p>
+              ) : (
+                marketIntel.bestValuePicks.map((l, i) => (
+                  <div
+                    key={l.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border text-xs gap-3 ${i === 0 ? "bg-amber-50 border-amber-200 ring-1 ring-amber-300/40" : "bg-slate-50 border-slate-200"}`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 ${i === 0 ? "bg-amber-400 text-white" : "bg-slate-200 text-slate-600"}`}>
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 truncate">{l.property_name}</p>
+                        <p className="text-slate-400">{l.bedrooms} · {l.size_sqft.toLocaleString()} sqft</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-slate-800">RM {l.price_monthly.toLocaleString()}</p>
+                      <p className={`font-bold ${i === 0 ? "text-amber-600" : "text-slate-500"}`}>RM {l.rmPerSqft}/sqft</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

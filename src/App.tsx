@@ -2,7 +2,17 @@ import { useState, useEffect, useRef } from "react";
 import { CollectionResult } from "./types";
 import ListingTable from "./components/ListingTable";
 import StatsDashboard from "./components/StatsDashboard";
-import { Search, Building2, HelpCircle, ArrowRight, Compass, ShieldAlert, Sparkles, Loader2, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Building2,
+  HelpCircle,
+  ArrowRight,
+  Compass,
+  ShieldAlert,
+  Sparkles,
+  Loader2,
+  ChevronRight
+} from "lucide-react";
 
 export default function App() {
   const [urlInput, setUrlInput] = useState("");
@@ -20,7 +30,10 @@ export default function App() {
   // Close autocomplete when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
+      if (
+        autocompleteRef.current &&
+        !autocompleteRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     }
@@ -39,7 +52,9 @@ export default function App() {
 
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/suggestions?q=${encodeURIComponent(searchInput)}`);
+        const response = await fetch(
+          `/api/suggestions?q=${encodeURIComponent(searchInput)}`
+        );
         if (response.ok) {
           const data = await response.json();
           setSuggestions(data);
@@ -59,11 +74,20 @@ export default function App() {
 
     const stages = [
       { progress: 10, text: "Bypassing Cloudflare protection layers..." },
-      { progress: 25, text: "Scanning Speedhome public sitemaps and directories..." },
-      { progress: 45, text: "Resolving allowed path matches from robots.txt..." },
+      {
+        progress: 25,
+        text: "Scanning Speedhome public sitemaps and directories..."
+      },
+      {
+        progress: 45,
+        text: "Resolving allowed path matches from robots.txt..."
+      },
       { progress: 65, text: "Scraping and extracting listing packages..." },
-      { progress: 80, text: "Aggregating monthly, yearly, and daily pricing matrices..." },
-      { progress: 95, text: "Formulating local statistical metrics..." },
+      {
+        progress: 80,
+        text: "Aggregating monthly, yearly, and daily pricing matrices..."
+      },
+      { progress: 95, text: "Formulating local statistical metrics..." }
     ];
 
     let currentStageIndex = 0;
@@ -114,7 +138,9 @@ export default function App() {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || "Failed to fetch rental listing records.");
+        throw new Error(
+          errData.error || "Failed to fetch rental listing records."
+        );
       }
 
       const data: CollectionResult = await response.json();
@@ -143,15 +169,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      
       {/* Premium Header Accent */}
       <div className="h-1 w-full bg-blue-600" />
 
       {/* Primary Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
-        
         {/* Navigation / Brand Header */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-6" id="app-header">
+        <header
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-6"
+          id="app-header"
+        >
           <div>
             <div className="flex items-center gap-2">
               <span className="p-1.5 bg-blue-600 rounded text-white font-mono text-xs font-bold leading-none">
@@ -162,10 +189,11 @@ export default function App() {
               </h1>
             </div>
             <p className="text-xs text-slate-500 mt-1 font-sans">
-              Automated platform to crawl, parse, and analyze real rental listings in Malaysia
+              Automated platform to crawl, parse, and analyze real rental
+              listings in Malaysia
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-slate-200 font-mono text-[10px] text-slate-500 shadow-sm">
             <span className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -177,7 +205,10 @@ export default function App() {
         </header>
 
         {/* Control Interface (Form Inputs) */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6" id="input-controls-section">
+        <section
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+          id="input-controls-section"
+        >
           {/* Main Search Panel */}
           <div className="lg:col-span-8 bg-white border border-slate-200 p-6 rounded-xl flex flex-col gap-6 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
@@ -190,13 +221,17 @@ export default function App() {
                 Initiate Automation Crawler
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Input a direct Speedhome URL or type any city, neighborhood, or building name in Malaysia.
+                Input a direct Speedhome URL or type any city, neighborhood, or
+                building name in Malaysia.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Option A: Search Area */}
-              <div className="flex flex-col gap-2 relative" ref={autocompleteRef}>
+              <div
+                className="flex flex-col gap-2 relative"
+                ref={autocompleteRef}
+              >
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Option 1: Search Area or Apartment
                 </label>
@@ -258,7 +293,13 @@ export default function App() {
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">
                 Popular Presets:
               </span>
-              {["Mont Kiara", "Bangsar", "KLCC", "Petaling Jaya", "Subang Jaya"].map((preset) => (
+              {[
+                "Mont Kiara",
+                "Bangsar",
+                "KLCC",
+                "Petaling Jaya",
+                "Subang Jaya"
+              ].map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -273,7 +314,13 @@ export default function App() {
             {/* Submit Action */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-2">
               <div className="text-[10px] text-slate-400 leading-relaxed max-w-[450px]">
-                * Our servers query public index endpoints conforming fully to Speedhome's <code className="text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">robots.txt</code> specifications, utilizing a reasonable delay sequence to preserve resources.
+                * Our servers query public index endpoints conforming fully to
+                Speedhome's{" "}
+                <code className="text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                  robots.txt
+                </code>{" "}
+                specifications, utilizing a reasonable delay sequence to
+                preserve resources.
               </div>
               <button
                 type="button"
@@ -304,46 +351,69 @@ export default function App() {
                 <HelpCircle className="h-4 w-4 text-blue-600" />
                 Automation Guide
               </h3>
-              
+
               <ul className="text-xs text-slate-600 flex flex-col gap-3.5 list-none">
                 <li className="flex items-start gap-2">
-                  <span className="h-5 w-5 bg-blue-50 text-blue-600 border border-blue-100 font-mono font-bold rounded flex items-center justify-center shrink-0">1</span>
-                  <span>Enter a direct Rent page URL like <code className="text-slate-700 bg-slate-50 px-1 py-0.5 rounded border border-slate-200">speedhome.com/rent/mont-kiara</code> or search.</span>
+                  <span className="h-5 w-5 bg-blue-50 text-blue-600 border border-blue-100 font-mono font-bold rounded flex items-center justify-center shrink-0">
+                    1
+                  </span>
+                  <span>
+                    Enter a direct Rent page URL like{" "}
+                    <code className="text-slate-700 bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
+                      speedhome.com/rent/mont-kiara
+                    </code>{" "}
+                    or search.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="h-5 w-5 bg-blue-50 text-blue-600 border border-blue-100 font-mono font-bold rounded flex items-center justify-center shrink-0">2</span>
-                  <span>The platform identifies sitemap listings and matches indices from public paths allowed under robots.txt.</span>
+                  <span className="h-5 w-5 bg-blue-50 text-blue-600 border border-blue-100 font-mono font-bold rounded flex items-center justify-center shrink-0">
+                    2
+                  </span>
+                  <span>
+                    The platform identifies sitemap listings and matches indices
+                    from public paths allowed under robots.txt.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="h-5 w-5 bg-blue-50 text-blue-600 border border-blue-100 font-mono font-bold rounded flex items-center justify-center shrink-0">3</span>
-                  <span>We retrieve active listings directly from Speedhome, calculate segment pricing, medians, averages, fair contract rates, and offer CSV export.</span>
+                  <span className="h-5 w-5 bg-blue-50 text-blue-600 border border-blue-100 font-mono font-bold rounded flex items-center justify-center shrink-0">
+                    3
+                  </span>
+                  <span>
+                    We retrieve active listings directly from Speedhome,
+                    calculate segment pricing, medians, averages, fair contract
+                    rates, and offer CSV export.
+                  </span>
                 </li>
               </ul>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 text-[10px] text-slate-400 flex items-center gap-2">
               <ShieldAlert className="h-4.5 w-4.5 text-blue-500/70 shrink-0" />
-              <span>
-                Guarantees zero platform disruptions. Safe crawling.
-              </span>
+              <span>Guarantees zero platform disruptions. Safe crawling.</span>
             </div>
           </div>
         </section>
 
         {/* Loading overlay panel */}
         {loading && (
-          <div className="bg-white border border-slate-200 p-8 rounded-xl flex flex-col items-center justify-center gap-6 shadow-sm text-center py-16" id="loading-panel">
+          <div
+            className="bg-white border border-slate-200 p-8 rounded-xl flex flex-col items-center justify-center gap-6 shadow-sm text-center py-16"
+            id="loading-panel"
+          >
             <div className="p-4 bg-blue-50 rounded-full border border-blue-100 text-blue-600 relative">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
-            
+
             <div className="max-w-md flex flex-col gap-2">
-              <h3 className="text-lg font-bold text-slate-900">Retrieving Speedhome Data</h3>
+              <h3 className="text-lg font-bold text-slate-900">
+                Retrieving Speedhome Data
+              </h3>
               <p className="text-sm text-blue-600 font-semibold font-mono min-h-[20px]">
                 {loadingStage}
               </p>
               <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                Fetching indices from Speedhome’s sitemaps and compiling statistics. Please hold on.
+                Fetching indices from Speedhome’s sitemaps and compiling
+                statistics. Please hold on.
               </p>
             </div>
 
@@ -354,13 +424,18 @@ export default function App() {
                 style={{ width: `${loadingProgress}%` }}
               />
             </div>
-            <span className="text-xs text-slate-500 font-mono font-semibold">{loadingProgress}% Complete</span>
+            <span className="text-xs text-slate-500 font-mono font-semibold">
+              {loadingProgress}% Complete
+            </span>
           </div>
         )}
 
         {/* Error Notification */}
         {error && (
-          <div className="bg-red-50 border border-red-200 p-5 rounded-xl flex items-start gap-4 shadow-sm text-red-800" id="error-panel">
+          <div
+            className="bg-red-50 border border-red-200 p-5 rounded-xl flex items-start gap-4 shadow-sm text-red-800"
+            id="error-panel"
+          >
             <div className="p-2 bg-red-100 text-red-600 border border-red-200 rounded-lg shrink-0">
               <ShieldAlert className="h-5 w-5" />
             </div>
@@ -384,13 +459,25 @@ export default function App() {
             <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 font-mono shadow-sm">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
-                Active Dataset: <strong className="text-slate-800 text-sm font-display">{resultData.area_name}</strong>
+                Active Dataset:{" "}
+                <strong className="text-slate-800 text-sm font-display">
+                  {resultData.area_name}
+                </strong>
               </span>
               <span>
-                Crawl URL: <a href={resultData.source_url} target="_blank" referrerPolicy="no-referrer" className="text-blue-600 hover:underline font-semibold">{resultData.source_url}</a>
+                Crawl URL:{" "}
+                <a
+                  href={resultData.source_url}
+                  target="_blank"
+                  referrerPolicy="no-referrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  {resultData.source_url}
+                </a>
               </span>
               <span>
-                Timestamp: {new Date(resultData.collected_at).toLocaleString("en-GB")}
+                Timestamp:{" "}
+                {new Date(resultData.collected_at).toLocaleString("en-GB")}
               </span>
             </div>
 
@@ -412,15 +499,22 @@ export default function App() {
 
         {/* Welcome Empty State */}
         {!resultData && !loading && (
-          <div className="bg-white border border-slate-200 p-12 rounded-xl flex flex-col items-center justify-center gap-5 text-center shadow-sm py-20" id="welcome-empty-panel">
+          <div
+            className="bg-white border border-slate-200 p-12 rounded-xl flex flex-col items-center justify-center gap-5 text-center shadow-sm py-20"
+            id="welcome-empty-panel"
+          >
             <div className="p-4 bg-slate-50 border border-slate-200 text-blue-600 rounded-full">
               <Building2 className="h-8 w-8" />
             </div>
-            
+
             <div className="max-w-md flex flex-col gap-2">
-              <h3 className="text-lg font-bold text-slate-900">No Rental Data Loaded</h3>
+              <h3 className="text-lg font-bold text-slate-900">
+                No Rental Data Loaded
+              </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Enter an area in Malaysia (e.g. "Mont Kiara", "Bangsar", "KLCC") or a direct Speedhome rent path URL to collect and analyze active properties.
+                Enter an area in Malaysia (e.g. "Mont Kiara", "Bangsar", "KLCC")
+                or a direct Speedhome rent path URL to collect and analyze
+                active properties.
               </p>
             </div>
 
@@ -433,14 +527,15 @@ export default function App() {
             </button>
           </div>
         )}
-
       </div>
 
       {/* App Footer */}
       <footer className="mt-16 border-t border-slate-200 py-8 bg-white text-center text-[10px] text-slate-400 font-mono">
-        <p>© 2026 Speedhome Rental Data Collector • Conforms fully to Speedhome public directory access guidelines</p>
+        <p>
+          © 2026 Property Price Intelligence App • Conforms fully to Speedhome
+          public directory access guidelines
+        </p>
       </footer>
-
     </div>
   );
 }
