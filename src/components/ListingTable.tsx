@@ -166,7 +166,7 @@ export default function ListingTable({ listings, areaName }: ListingTableProps) 
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Text Search */}
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-50">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
@@ -234,7 +234,7 @@ export default function ListingTable({ listings, areaName }: ListingTableProps) 
                   Property & Area <ArrowUpDown className="h-3 w-3" />
                 </button>
               </th>
-              <th className="py-4 px-6 min-w-[250px]">
+              <th className="py-4 px-6 min-w-62.5">
                 <button
                   onClick={() => handleSort("relevance")}
                   className={`flex items-center gap-1 transition-colors cursor-pointer ${sortField === "relevance" ? "text-blue-600" : "hover:text-slate-800"}`}

@@ -254,7 +254,7 @@ export default function App() {
 
                 {/* Autocomplete Dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-[68px] left-0 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden divide-y divide-slate-100">
+                  <div className="absolute top-17 left-0 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden divide-y divide-slate-100">
                     {suggestions.map((item) => (
                       <button
                         key={item}
@@ -313,7 +313,7 @@ export default function App() {
 
             {/* Submit Action */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-2">
-              <div className="text-[10px] text-slate-400 leading-relaxed max-w-[450px]">
+              <div className="text-[10px] text-slate-400 leading-relaxed max-w-112.5">
                 * Our servers query public index endpoints conforming fully to
                 Speedhome's{" "}
                 <code className="text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
@@ -408,7 +408,7 @@ export default function App() {
               <h3 className="text-lg font-bold text-slate-900">
                 Retrieving Speedhome Data
               </h3>
-              <p className="text-sm text-blue-600 font-semibold font-mono min-h-[20px]">
+              <p className="text-sm text-blue-600 font-semibold font-mono min-h-5">
                 {loadingStage}
               </p>
               <p className="text-xs text-slate-500 leading-relaxed mt-1">

@@ -435,7 +435,7 @@ export default function StatsDashboard({ overall, segments, areaName, listings }
               <span className="text-slate-300 text-xs">→</span>
               <span className="text-sm font-bold text-rose-500 font-mono">RM {marketIntel.maxPrice.toLocaleString()}</span>
             </div>
-            <div className="w-full h-1.5 bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 rounded-full" />
+            <div className="w-full h-1.5 bg-linear-to-r from-emerald-400 via-amber-300 to-rose-400 rounded-full" />
             <p className="text-[10px] text-slate-400">Market width range</p>
           </div>
 
@@ -732,7 +732,7 @@ export default function StatsDashboard({ overall, segments, areaName, listings }
           </div>
 
           {/* Monthly Rate (Bulanan) */}
-          <div className="bg-slate-50/50 p-5 rounded-lg border border-slate-200 flex flex-col justify-between ring-1 ring-emerald-500/10 shadow-sm bg-emerald-50/5">
+          <div className="bg-slate-50/50 p-5 rounded-lg border border-slate-200 flex flex-col justify-between ring-1 ring-emerald-500/10 shadow-sm">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200">
