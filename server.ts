@@ -474,10 +474,17 @@ async function createAppServer() {
       server: { middlewareMode: true },
       appType: "spa",
     });
-    app.use(vite.middlewares);
+    // Important: API routes must be accessible before Vite middleware intercepts
+    app.use((req, res, next) => {
+      if (req.path.startsWith("/api")) {
+        return next();
+      }
+      vite.middlewares(req, res, next);
+    });
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
+    // Catch-all route for SPA - but NOT for /api routes
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
@@ -493,6 +500,12 @@ function listenOnPort(port: number) {
 
 async function startServer(port: number = START_PORT) {
   await createAppServer();
+  
+  // Add 404 handler after all other routes and middleware
+  app.use((req, res) => {
+    console.warn(`[404] ${req.method} ${req.path}`);
+    res.status(404).json({ error: `Route ${req.path} not found` });
+  });
 
   try {
     const server = await listenOnPort(port);
