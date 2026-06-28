@@ -232,8 +232,8 @@ async function scrapeSpeedhome(scrapeUrl: string): Promise<any[]> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       if (attempt > 0) {
-        console.log(`[Scraper] Retry attempt ${attempt}/${maxRetries}... waiting ${1000 * attempt}ms`);
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        console.log(`[Scraper] Retry attempt ${attempt}/${maxRetries}... waiting ${3000 * attempt}ms`);
+        await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
       }
 
       const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
