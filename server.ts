@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { chromium } from "playwright";
+import { load } from "cheerio";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -137,56 +137,133 @@ function calculateStats(listings: any[]) {
   };
 }
 
-// Playwright scraper for Speedhome listings
+// Generate sample/fallback listings for when live scraping is unavailable
+function generateSampleListings(area: string): any[] {
+  const sampleData: Record<string, any[]> = {
+    "mont-kiara": [
+      { title: "Mont Kiara Pelangi - 2BR Condo", property_name: "Mont Kiara Pelangi", url: "https://speedhome.com/rent/mont-kiara", size_sqft: 1100, price_monthly: 2500, bedrooms: "2 Bedrooms" },
+      { title: "Seni Mont Kiara - 3BR Luxury", property_name: "Seni Mont Kiara", url: "https://speedhome.com/rent/mont-kiara", size_sqft: 1800, price_monthly: 3800, bedrooms: "3 Bedrooms" },
+      { title: "10 Mont Kiara - 1BR Modern", property_name: "10 Mont Kiara", url: "https://speedhome.com/rent/mont-kiara", size_sqft: 850, price_monthly: 1800, bedrooms: "1 Bedroom" },
+      { title: "Kiaramas Ayuria - 2BR Family", property_name: "Kiaramas Ayuria", url: "https://speedhome.com/rent/mont-kiara", size_sqft: 1200, price_monthly: 2800, bedrooms: "2 Bedrooms" },
+      { title: "Gateway Kiaramas - 1BR Studio", property_name: "Gateway Kiaramas", url: "https://speedhome.com/rent/mont-kiara", size_sqft: 700, price_monthly: 1500, bedrooms: "1 Bedroom" },
+      { title: "Mont Kiara Pines - 3BR Spacious", property_name: "Mont Kiara Pines", url: "https://speedhome.com/rent/mont-kiara", size_sqft: 2000, price_monthly: 4200, bedrooms: "3 Bedrooms" },
+    ],
+    "bangsar": [
+      { title: "Nadi Bangsar - 2BR Modern", property_name: "Nadi Bangsar", url: "https://speedhome.com/rent/bangsar", size_sqft: 1050, price_monthly: 2200, bedrooms: "2 Bedrooms" },
+      { title: "Suasana Bangsar - 3BR Luxury", property_name: "Suasana Bangsar", url: "https://speedhome.com/rent/bangsar", size_sqft: 1600, price_monthly: 3500, bedrooms: "3 Bedrooms" },
+      { title: "Serai Bangsar - 1BR Cozy", property_name: "Serai Bangsar", url: "https://speedhome.com/rent/bangsar", size_sqft: 800, price_monthly: 1600, bedrooms: "1 Bedroom" },
+    ],
+    "klcc": [
+      { title: "Platinum Suites - 2BR City View", property_name: "Platinum Suites", url: "https://speedhome.com/rent/klcc", size_sqft: 1200, price_monthly: 3200, bedrooms: "2 Bedrooms" },
+      { title: "Troika - 3BR Penthouse", property_name: "Troika", url: "https://speedhome.com/rent/klcc", size_sqft: 1900, price_monthly: 5000, bedrooms: "3 Bedrooms" },
+      { title: "Binjai On The Park - 1BR Premium", property_name: "Binjai On The Park", url: "https://speedhome.com/rent/klcc", size_sqft: 950, price_monthly: 2500, bedrooms: "1 Bedroom" },
+    ],
+    "petaling-jaya": [
+      { title: "Ameera Residences - 2BR Family", property_name: "Ameera Residences", url: "https://speedhome.com/rent/petaling-jaya", size_sqft: 1100, price_monthly: 1900, bedrooms: "2 Bedrooms" },
+      { title: "Five Stones - 1BR Affordable", property_name: "Five Stones", url: "https://speedhome.com/rent/petaling-jaya", size_sqft: 750, price_monthly: 1300, bedrooms: "1 Bedroom" },
+      { title: "Jaya One - 2BR Trendy", property_name: "Jaya One", url: "https://speedhome.com/rent/petaling-jaya", size_sqft: 1050, price_monthly: 1700, bedrooms: "2 Bedrooms" },
+    ]
+  };
+
+  // Normalize area name to match sample data keys
+  const areaKey = area.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  
+  // Return matching sample data or generic fallback
+  if (sampleData[areaKey]) {
+    return sampleData[areaKey].map(s => ({ ...s, isSample: true }));
+  }
+
+  // Generic fallback for any area
+  return [
+    { title: `Premium Condo in ${area}`, property_name: area, url: "https://speedhome.com", size_sqft: 1100, price_monthly: 2000, bedrooms: "2 Bedrooms", isSample: true },
+    { title: `Luxury Apartment in ${area}`, property_name: area, url: "https://speedhome.com", size_sqft: 1500, price_monthly: 2800, bedrooms: "2 Bedrooms", isSample: true },
+    { title: `Modern Studio in ${area}`, property_name: area, url: "https://speedhome.com", size_sqft: 600, price_monthly: 1200, bedrooms: "Studio", isSample: true },
+  ];
+}
+
+// Cheerio-based scraper for Speedhome listings (HTTP-based, serverless-friendly)
 async function scrapeSpeedhome(scrapeUrl: string): Promise<any[]> {
-  console.log(`[Playwright] Scraping: ${scrapeUrl}`);
-  const browser = await chromium.launch({ headless: true });
+  console.log(`[Scraper] Fetching from: ${scrapeUrl}`);
+  
   try {
-    const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Accept-Language": "en-US,en;q=0.9",
+    // Set up abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
+    // Try direct fetch with strong browser headers
+    const response = await fetch(scrapeUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Dnt": "1",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Linux"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+      }
     });
+    
+    clearTimeout(timeoutId);
 
-    await page.goto(scrapeUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
-    try {
-      await page.waitForSelector('a[href*="/details/"]', { timeout: 15000 });
-    } catch {
-      console.warn("[Playwright] No listing cards found, page may be empty or blocked.");
+    const html = await response.text();
+    
+    if (!html || html.length < 500) {
+      console.warn("[Scraper] Response too short or empty");
       return [];
     }
 
-    // Short pause to let lazy-loaded content settle
-    await page.waitForTimeout(1500);
+    const $ = load(html);
+    const listings: any[] = [];
 
-    const rawListings: any[] = await page.evaluate(() => {
-      const cards = Array.from(document.querySelectorAll('a[href*="/details/"]'));
-      return cards.map((card: any) => {
-        const h3 = card.querySelector("h3");
-        const title: string = h3
-          ? h3.innerText.trim()
-          : (card.getAttribute("aria-label") || "").replace("View details for ", "");
+    // Find all property cards with href containing /details/
+    $('a[href*="/details/"]').each((_idx: number, el: any) => {
+      try {
+        const $card = $(el);
+        
+        // Get title from h3 or aria-label
+        let title = $card.find("h3").text().trim();
+        if (!title) {
+          title = $card.attr("aria-label")?.replace("View details for ", "") || "";
+        }
+        
+        if (!title) return; // Skip if no title
+        
+        // Get URL
+        let href = $card.attr("href") || "";
+        const url = href.startsWith("http") ? href : "https://speedhome.com" + href;
 
-        const href: string = card.getAttribute("href") || "";
-        const url: string = href.startsWith("http") ? href : "https://speedhome.com" + href;
+        // Get price from element with class containing "propertyPrice"
+        const priceText = $card.find('[class*="propertyPrice"]').text() || "";
+        const price_monthly = parseInt(priceText.replace(/[^0-9]/g, "")) || 0;
 
-        // Price
-        const priceEl: any = card.querySelector('[class*="propertyPrice"]');
-        const priceText: string = priceEl ? priceEl.innerText : "";
-        const price_monthly: number = parseInt(priceText.replace(/[^0-9]/g, "")) || 0;
+        if (price_monthly === 0) return; // Skip if no price
 
-        // Specs: sqft + bedrooms
-        const specsEl: any = card.querySelector('[class*="propertySpecs"]');
-        const specsSpans: string[] = specsEl
-          ? Array.from(specsEl.querySelectorAll("span")).map((s: any) => s.innerText?.trim() || "")
-          : [];
+        // Get specs (sqft, bedrooms, etc)
+        const $specs = $card.find('[class*="propertySpecs"]');
+        const specsTexts: string[] = [];
+        $specs.find("span").each((_i: number, span: any) => {
+          const text = $(span).text().trim();
+          if (text) specsTexts.push(text);
+        });
 
-        const sqftSpan = specsSpans.find((s: string) => s.includes("sqft")) || "0";
-        const size_sqft: number = parseInt(sqftSpan.replace(/[^0-9]/g, "")) || 0;
+        const sqftSpan = specsTexts.find(s => s.includes("sqft")) || "";
+        const size_sqft = parseInt(sqftSpan.replace(/[^0-9]/g, "")) || 0;
 
-        const numericSpans = specsSpans.filter((s: string) => /^\d+$/.test(s));
-        const bedroomNum: number = parseInt(numericSpans[0] || "1");
+        const numericSpans = specsTexts.filter(s => /^\d+$/.test(s));
+        const bedroomNum = parseInt(numericSpans[0] || "1");
 
         let bedrooms: string;
         if (bedroomNum === 0) bedrooms = "Studio";
@@ -196,18 +273,25 @@ async function scrapeSpeedhome(scrapeUrl: string): Promise<any[]> {
         else if (bedroomNum === 4) bedrooms = "4 Bedrooms";
         else bedrooms = "5+ Bedrooms";
 
-        // Property name: part before the first comma in title
-        const property_name: string = title.includes(",")
-          ? title.split(",")[0].trim()
-          : title;
+        // Property name: part before first comma
+        const property_name = title.includes(",") ? title.split(",")[0].trim() : title;
 
-        return { title, property_name, url, size_sqft, price_monthly, bedrooms };
-      });
+        listings.push({ title, property_name, url, size_sqft, price_monthly, bedrooms });
+      } catch (err) {
+        console.error("[Scraper] Error parsing card:", err);
+      }
     });
 
-    return rawListings.filter((l: any) => l.price_monthly > 0);
-  } finally {
-    await browser.close();
+    console.log(`[Scraper] Successfully parsed ${listings.length} listings from HTML`);
+    return listings;
+
+  } catch (err: any) {
+    console.error("[Scraper] Error:", err.message);
+    // Provide helpful guidance based on error type
+    if (err.message.includes("403")) {
+      throw new Error(`Speedhome is blocking requests. This may indicate anti-bot detection. Error: ${err.message}`);
+    }
+    throw new Error(`Failed to fetch Speedhome: ${err.message}`);
   }
 }
 
@@ -245,7 +329,18 @@ app.post("/api/collect", async (req, res) => {
 
   try {
     console.log(`[Scraper] Collecting listings for: ${searchArea}`);
-    const listings = await scrapeSpeedhome(scrapeUrl);
+    let listings = [];
+    
+    // Try real scraping first
+    try {
+      listings = await scrapeSpeedhome(scrapeUrl);
+    } catch (scrapeErr: any) {
+      console.warn(`[Scraper] Live scraping failed: ${scrapeErr.message}`);
+      console.log("[Scraper] Using sample data as fallback");
+      
+      // Fallback: use sample/mock data
+      listings = generateSampleListings(searchArea);
+    }
 
     // Process and augment listings
     const processedListings = listings.map((l: any, idx: number) => {
@@ -281,13 +376,16 @@ app.post("/api/collect", async (req, res) => {
       };
     }).filter(s => s.count > 0); // only keep segments that have listings
 
+    const isLiveData = listings.length > 0 && !listings[0].isSample;
+    
     res.json({
       area_name: searchArea,
       source_url: sourceUrlUsed,
       collected_at: new Date().toISOString(),
       overall_summary: overallSummary,
       segment_summary: segmentSummary,
-      listings: processedListings
+      listings: processedListings,
+      ...(isLiveData ? {} : { note: "Showing sample data. Live scraping temporarily unavailable." })
     });
 
   } catch (error: any) {
